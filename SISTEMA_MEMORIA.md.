@@ -1,0 +1,92 @@
+
+# JARVIS AI — SISTEMA DE MEMORIA
+
+## 1. OBJETIVO
+
+Crear un sistema de memoria persistente que permita a JARVIS almacenar, organizar, consultar y actualizar información de forma controlada.
+
+## 2. TIPOS DE MEMORIA
+
+### MEM-001 — Memoria inmediata
+- Conserva el contexto de la conversación actual.
+- Identifica instrucciones recientes.
+- Mantiene el hilo de la conversación.
+
+### MEM-002 — Memoria a corto plazo
+- Guarda información temporal.
+- Conserva tareas pendientes.
+- Recupera datos utilizados recientemente.
+
+### MEM-003 — Memoria a largo plazo
+- Almacena información autorizada.
+- Conserva preferencias del usuario.
+- Guarda conocimientos y experiencias útiles.
+
+### MEM-004 — Memoria de trabajo
+- Mantiene datos necesarios durante una tarea.
+- Permite consultar resultados intermedios.
+- Libera información temporal cuando deja de ser necesaria.
+
+## 3. ORGANIZACIÓN DE LOS RECUERDOS
+
+Cada recuerdo tendrá:
+
+- Identificador único.
+- Contenido.
+- Fecha de creación.
+- Categoría.
+- Fuente.
+- Nivel de importancia.
+- Estado de autorización.
+
+## 4. RECUPERACIÓN DE INFORMACIÓN
+
+El sistema debe:
+
+1. Recibir una consulta.
+2. Identificar palabras clave e intención.
+3. Buscar recuerdos relacionados.
+4. Comparar relevancia.
+5. Recuperar información útil.
+6. Entregarla al motor cognitivo.
+
+## 5. ACTUALIZACIÓN
+
+- Detectar información nueva.
+- Evitar duplicados.
+- Identificar información contradictoria.
+- Actualizar recuerdos autorizados.
+- Conservar el historial de cambios cuando sea necesario.
+
+## 6. PRIVACIDAD Y SEGURIDAD
+
+- No guardar información sensible sin autorización.
+- Permitir consultar los recuerdos almacenados.
+- Permitir corregir y eliminar recuerdos.
+- Proteger los archivos de memoria.
+- No compartir información sin permiso.
+- Evitar almacenar contraseñas y claves privadas.
+
+## 7. ALMACENAMIENTO
+
+La implementación podrá utilizar:
+
+- Base de datos SQLite.
+- Archivos JSON para configuraciones.
+- Índices de búsqueda.
+- Copias de seguridad cifradas.
+
+## 8. CONEXIÓN CON EL CEREBRO
+
+La memoria se conectará con:
+
+- Núcleo central.
+- Motor cognitivo.
+- Sistema de aprendizaje.
+- Módulo de planificación.
+
+Toda consulta deberá pasar por interfaces controladas.
+
+## 9. OBJETIVO FINAL
+
+Construir una memoria artificial persistente, organizada, recuperable y protegida que permita a JARVIS mantener continuidad entre sesiones.

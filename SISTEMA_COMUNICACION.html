@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS AI - Comunicación</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #030912;
+    color: #55dfff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 92%;
+    max-width: 650px;
+    text-align: center;
+    padding: 25px;
+    border: 1px solid #087ca7;
+    border-radius: 20px;
+    background: #071725;
+    box-shadow: 0 0 30px #007ca855;
+}
+
+h1 {
+    letter-spacing: 5px;
+}
+
+.core {
+    width: 150px;
+    height: 150px;
+    margin: 30px auto;
+    border: 3px solid #35dfff;
+    border-radius: 50%;
+    box-shadow: 0 0 25px #00cfff,
+                inset 0 0 25px #00cfff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+}
+
+.core span {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    50% {
+        box-shadow: 0 0 45px #00cfff,
+                    inset 0 0 35px #00cfff;
+    }
+}
+
+#status {
+    margin: 20px;
+    color: #ffffff;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #159dc8;
+    background: #03101d;
+    color: white;
+    font-size: 16px;
+}
+
+button {
+    margin: 8px 3px;
+    padding: 13px 18px;
+    border: 1px solid #36dfff;
+    border-radius: 10px;
+    background: #06283b;
+    color: #65eaff;
+    font-weight: bold;
+}
+
+button:active {
+    background: #087ca7;
+}
+
+#response {
+    margin-top: 20px;
+    padding: 15px;
+    color: white;
+    background: #03101d;
+    border-radius: 10px;
+    min-height: 50px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>J.A.R.V.I.S.</h1>
+<p>NEURAL COMMUNICATION SYSTEM</p>
+
+<div class="core">
+    <span>AI</span>
+</div>
+
+<div id="status">SISTEMA EN ESPERA</div>
+
+<input
+    id="message"
+    type="text"
+    placeholder="Escribe una instrucción..."
+>
+
+<br>
+
+<button onclick="sendMessage()">ENVIAR</button>
+<button onclick="startListening()">ESCUCHAR</button>
+<button onclick="stopListening()">DETENER</button>
+
+<div id="response">
+    JARVIS está preparado.
+</div>
+
+</div>
+
+<script>
+
+const statusText = document.getElementById("status");
+const responseBox = document.getElementById("response");
+const messageInput = document.getElementById("message");
+
+let recognition = null;
+
+function speak(text) {
+    if (!("speechSynthesis" in window)) {
+        responseBox.textContent =
+            "La síntesis de voz no está disponible.";
+        return;
+    }
+
+    speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(text);
+
+    speech.lang = "es-MX";
+    speech.rate = 0.95;
+    speech.pitch = 0.85;
+
+    speechSynthesis.speak(speech);
+}
+
+function sendMessage() {
+
+    const message = messageInput.value.trim();
+
+    if (!message) return;
+
+    responseBox.textContent =
+        "Solicitud recibida: " + message;
+
+    statusText.textContent = "PROCESANDO";
+
+    // Conexión futura con el motor cognitivo.
+    const answer =
+        "He recibido tu instrucción. Mi motor cognitivo todavía necesita conectarse.";
+
+    responseBox.textContent = answer;
+
+    speak(answer);
+
+    messageInput.value = "";
+
+    statusText.textContent = "SISTEMA ACTIVO";
+}
+
+function startListening() {
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        statusText.textContent =
+            "RECONOCIMIENTO NO COMPATIBLE";
+        responseBox.textContent =
+            "Prueba con una versión compatible de Chrome.";
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+
+    recognition.lang = "es-MX";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = function() {
+        statusText.textContent = "ESCUCHANDO...";
+    };
+
+    recognition.onresult = function(event) {
+
+        const transcript =
+            event.results[0][0].transcript;
+
+        messageInput.value = transcript;
+
+        sendMessage();
+    };
+
+    recognition.onerror = function(event) {
+        statusText.textContent =
+            "ERROR: " + event.error;
+    };
+
+    recognition.onend = function() {
+        if (statusText.textContent === "ESCUCHANDO...") {
+            statusText.textContent = "SISTEMA EN ESPERA";
+        }
+    };
+
+    recognition.start();
+}
+
+function stopListening() {
+
+    if (recognition) {
+        recognition.stop();
+    }
+
+    speechSynthesis.cancel();
+
+    statusText.textContent = "SISTEMA EN ESPERA";
+}
+
+</script>
+
+</body>
+</html>

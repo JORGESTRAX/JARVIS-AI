@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS - Red Neuronal</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#020711;color:#b9faff;
+ font-family:Arial,sans-serif;overflow:hidden
+}
+header{
+ height:65px;padding:12px 18px;
+ border-bottom:1px solid #087e9b;
+ display:flex;justify-content:space-between;align-items:center;
+ background:#061321
+}
+.logo{font-size:19px;letter-spacing:3px;color:#56eaff}
+.status{font-size:11px;color:#42ffb0}
+main{height:calc(100vh - 65px);display:flex;flex-direction:column}
+#brain{
+ width:100%;flex:1;min-height:250px;display:block;
+ background:radial-gradient(ellipse at center,#08243b 0%,#020711 70%)
+}
+.panel{
+ background:rgba(3,18,32,.96);
+ border-top:1px solid #087e9b;
+ padding:13px 16px;min-height:145px
+}
+.panel h2{font-size:16px;color:#58eaff;margin:0 0 8px}
+.panel p{font-size:13px;line-height:1.5;color:#b5d9e4;margin:5px 0}
+.controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button{
+ background:#06283c;border:1px solid #00bce8;
+ color:#7ceeff;padding:9px 13px;border-radius:5px;
+ font-weight:bold
+}
+button:active{background:#087e9b}
+#activity{font-size:11px;color:#47ffbd;margin-top:8px}
+</style>
+</head>
+
+<body>
+<header>
+ <div class="logo">J.A.R.V.I.S. // NEURAL CORE</div>
+ <div class="status">● SISTEMA VISUAL ACTIVO</div>
+</header>
+
+<main>
+ <canvas id="brain"></canvas>
+
+ <section class="panel">
+  <h2 id="nodeTitle">NÚCLEO CENTRAL</h2>
+  <p id="nodeDescription">
+   Centro de coordinación. Selecciona un nodo para explorar sus funciones.
+  </p>
+  <div class="controls">
+   <button onclick="activateNetwork()">ACTIVAR RED</button>
+   <button onclick="pauseNetwork()">PAUSAR</button>
+   <button onclick="resetNetwork()">REINICIAR</button>
+  </div>
+  <div id="activity">Esperando instrucciones...</div>
+ </section>
+</main>
+
+<script>
+const canvas=document.getElementById("brain");
+const ctx=canvas.getContext("2d");
+
+const nodes=[
+ {id:"core",name:"NÚCLEO CENTRAL",x:.50,y:.48,r:25,
+  color:"#48f5ff",
+  info:"Coordina los módulos de JARVIS y distribuye las tareas entre los sistemas."},
+
+ {id:"perception",name:"PERCEPCIÓN",x:.22,y:.23,r:16,
+  color:"#00d9ff",
+  info:"Módulo destinado a recibir información de texto, audio e imágenes."},
+
+ {id:"memory",name:"MEMORIA",x:.50,y:.13,r:17,
+  color:"#00ffc3",
+  info:"Organiza los recuerdos, datos y referencias almacenadas."},
+
+ {id:"reasoning",name:"RAZONAMIENTO",x:.78,y:.23,r:17,
+  color:"#8c8aff",
+  info:"Analiza información y prepara posibles respuestas o soluciones."},
+
+ {id:"learning",name:"APRENDIZAJE",x:.15,y:.52,r:16,
+  color:"#00ffc3",
+  info:"Módulo diseñado para incorporar conocimientos y mejorar procesos."},
+
+ {id:"planning",name:"PLANIFICACIÓN",x:.85,y:.52,r:16,
+  color:"#b68cff",
+  info:"Organiza objetivos, prioridades y secuencias de acciones."},
+
+ {id:"communication",name:"COMUNICACIÓN",x:.24,y:.81,r:16,
+  color:"#00d9ff",
+  info:"Gestiona la interacción con el usuario mediante texto y voz."},
+
+ {id:"analysis",name:"ANÁLISIS",x:.50,y:.86,r:16,
+  color:"#ffd36b",
+  info:"Examina datos y relaciones para apoyar la toma de decisiones."},
+
+ {id:"execution",name:"EJECUCIÓN",x:.76,y:.81,r:16,
+  color:"#ff8d8d",
+  info:"Representa el módulo encargado de ejecutar tareas autorizadas."}
+];
+
+const links=[
+ [0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],
+ [1,2],[2,3],[1,4],[3,5],[4,6],[5,8],
+ [6,7],[7,8],[2,7],[1,6],[3,8]
+];
+
+let width,height,dpr;
+let running=true;
+let pulses=[];
+let selected=0;
+let lastTime=0;
+
+function resize(){
+ dpr=Math.min(window.devicePixelRatio||1,2);
+ width=canvas.clientWidth;
+ height=canvas.clientHeight;
+ canvas.width=width*dpr;
+ canvas.height=height*dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize",resize);
+resize();
+
+function position(node){
+ return {x:node.x*width,y:node.y*height};
+}
+
+function drawBackground(){
+ ctx.save();
+ ctx.strokeStyle="rgba(0,180,230,.08)";
+ ctx.lineWidth=1;
+ const gap=35;
+ for(let x=0;x<width;x+=gap){
+  ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke();
+ }
+ for(let y=0;y<height;y+=gap){
+  ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();
+ }
+ ctx.restore();
+}
+
+function drawLinks(){
+ links.forEach(([a,b],index)=>{
+  const p=position(nodes[a]);
+  const q=position(nodes[b]);
+  ctx.beginPath();
+  ctx.moveTo(p.x,p.y);
+  ctx.lineTo(q.x,q.y);
+  ctx.strokeStyle="rgba(0,190,235,.30)";
+  ctx.lineWidth=1.2;
+  ctx.stroke();
+
+  if(running && Math.random()<.012){
+   pulses.push({a,b,t:0,speed:.004+Math.random()*.006});
+  }
+ });
+}
+
+function drawPulses(delta){
+ for(let i=pulses.length-1;i>=0;i--){
+  const pulse=pulses[i];
+  pulse.t+=pulse.speed*delta;
+  if(pulse.t>=1){pulses.splice(i,1);continue;}
+
+  const a=position(nodes[pulse.a]);
+  const b=position(nodes[pulse.b]);
+  const x=a.x+(b.x-a.x)*pulse.t;
+  const y=a.y+(b.y-a.y)*pulse.t;
+
+  ctx.beginPath();
+  ctx.arc(x,y,3.5,0,Math.PI*2);
+  ctx.fillStyle="#ffffff";
+  ctx.shadowBlur=15;
+  ctx.shadowColor="#00eaff";
+  ctx.fill();
+  ctx.shadowBlur=0;
+ }
+}
+
+function drawNodes(time){
+ nodes.forEach((node,index)=>{
+  const p=position(node);
+  const wave=1+Math.sin(time*.002+index)*.10;
+  const radius=node.r*wave;
+
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,radius+9,0,Math.PI*2);
+  ctx.strokeStyle="rgba(0,220,255,.13)";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,radius,0,Math.PI*2);
+  ctx.fillStyle="rgba(0,40,65,.95)";
+  ctx.shadowBlur=index===selected?28:15;
+  ctx.shadowColor=node.color;
+  ctx.fill();
+  ctx.shadowBlur=0;
+
+  ctx.lineWidth=index===selected?3:1.5;
+  ctx.strokeStyle=node.color;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,4,0,Math.PI*2);
+  ctx.fillStyle=node.color;
+  ctx.fill();
+
+  ctx.font="10px Arial";
+  ctx.textAlign="center";
+  ctx.fillStyle=index===selected?"#ffffff":"#a5eefa";
+  ctx.fillText(node.name,p.x,p.y+radius+17);
+ });
+}
+
+function draw(time){
+ const delta=Math.min(time-lastTime,50)||16;
+ lastTime=time;
+ ctx.clearRect(0,0,width,height);
+ drawBackground();
+ drawLinks();
+ drawPulses(delta);
+ drawNodes(time);
+ if(running)requestAnimationFrame(draw);
+}
+
+function activateNetwork(){
+ if(running)return;
+ running=true;
+ document.getElementById("activity").textContent=
+ "Red neuronal visual en funcionamiento.";
+ requestAnimationFrame(draw);
+}
+
+function pauseNetwork(){
+ running=false;
+ document.getElementById("activity").textContent=
+ "Simulación visual pausada.";
+}
+
+function resetNetwork(){
+ pulses=[];
+ selected=0;
+ showNode(0);
+ if(!running){running=true;requestAnimationFrame(draw);}
+ document.getElementById("activity").textContent=
+ "Red visual reiniciada.";
+}
+
+function showNode(index){
+ selected=index;
+ const node=nodes[index];
+ document.getElementById("nodeTitle").textContent=node.name;
+ document.getElementById("nodeDescription").textContent=node.info;
+ document.getElementById("activity").textContent=
+ "Nodo seleccionado: "+node.name;
+}
+
+canvas.addEventListener("click",event=>{
+ const rect=canvas.getBoundingClientRect();
+ const mx=event.clientX-rect.left;
+ const my=event.clientY-rect.top;
+ let closest=-1;
+ let distance=Infinity;
+
+ nodes.forEach((node,index)=>{
+  const p=position(node);
+  const d=Math.hypot(mx-p.x,my-p.y);
+  if(d<distance){distance=d;closest=index;}
+ });
+
+ if(closest>=0 && distance<38)showNode(closest);
+});
+
+showNode(0);
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS - Centro de Control</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#020812;color:#c8faff;
+ font-family:Arial,sans-serif;
+}
+header{
+ padding:18px;background:#061727;
+ border-bottom:1px solid #087e9b;
+ display:flex;justify-content:space-between;align-items:center;
+}
+h1{font-size:20px;letter-spacing:3px;color:#54eaff;margin:0}
+.status{font-size:11px;color:#42ffb0}
+main{padding:16px;max-width:1000px;margin:auto}
+h2{font-size:15px;color:#54eaff;letter-spacing:2px}
+.summary{
+ padding:15px;background:#071b2b;
+ border:1px solid #087e9b;border-radius:9px;
+ margin-bottom:20px;
+}
+.summary p{font-size:13px;line-height:1.5;color:#a9d5df}
+.metrics{
+ display:grid;grid-template-columns:repeat(2,1fr);
+ gap:10px;margin:15px 0;
+}
+.metric{
+ background:#061727;border:1px solid #12516a;
+ padding:13px;border-radius:7px;
+}
+.metric span{font-size:11px;color:#8bbbc9}
+.metric strong{display:block;font-size:19px;color:#55eaff;margin-top:7px}
+.grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:11px;
+}
+.module{
+ background:linear-gradient(145deg,#09243a,#04101d);
+ border:1px solid #12607b;border-radius:8px;
+ padding:14px;min-height:125px;
+}
+.module h3{font-size:13px;color:#62eaff;margin:0 0 8px}
+.module p{font-size:11px;line-height:1.5;color:#a9cbd6}
+.module button{
+ width:100%;padding:9px;margin-top:5px;
+ background:#063047;color:#75edff;
+ border:1px solid #00a9d5;border-radius:5px;
+}
+.panel{
+ margin-top:18px;padding:15px;
+ border:1px solid #087e9b;border-radius:8px;
+ background:#061522;min-height:120px;
+}
+.panel p{font-size:13px;line-height:1.6}
+footer{text-align:center;padding:20px;color:#527987;font-size:10px}
+@media(max-width:380px){
+ .grid{grid-template-columns:1fr}
+ h1{font-size:16px}
+}
+</style>
+</head>
+
+<body>
+<header>
+ <h1>J.A.R.V.I.S.</h1>
+ <div class="status">● CENTRO DE CONTROL</div>
+</header>
+
+<main>
+ <section class="summary">
+  <h2>SISTEMA CENTRAL</h2>
+  <p>
+   Panel de supervisión de la arquitectura de JARVIS.
+   Selecciona cualquier módulo para consultar su función
+   y abrir su archivo correspondiente.
+  </p>
+  <div class="metrics">
+   <div class="metric">
+    <span>MÓDULOS REGISTRADOS</span>
+    <strong id="total">9</strong>
+   </div>
+   <div class="metric">
+    <span>INTERFAZ</span>
+    <strong>ACTIVA</strong>
+   </div>
+  </div>
+ </section>
+
+ <h2>ARQUITECTURA NEURONAL</h2>
+ <section class="grid" id="modules"></section>
+
+ <section class="panel">
+  <h2 id="detailTitle">NÚCLEO DE CONTROL</h2>
+  <p id="detailText">
+   Selecciona un módulo para consultar sus detalles.
+  </p>
+  <p id="detailStatus">Esperando selección...</p>
+ </section>
+</main>
+
+<footer>
+ JARVIS CORE SYSTEM · VERSIÓN 0.2
+</footer>
+
+<script>
+const modules=[
+ {
+  name:"ARQUITECTURA",
+  file:"ARQUITECTURA.md",
+  type:"Diseño",
+  description:"Estructura general y organización del proyecto."
+ },
+ {
+  name:"CEREBRO HOLOGRÁFICO",
+  file:"CEREBRO_HOLOGRAFICO.md",
+  type:"Diseño",
+  description:"Diseño visual y conceptual del cerebro."
+ },
+ {
+  name:"MAPA NEURONAL",
+  file:"MAPA_NEURONAL.md",
+  type:"Diseño",
+  description:"Distribución de nodos, rutas y conexiones."
+ },
+ {
+  name:"MOTOR COGNITIVO",
+  file:"MOTOR_COGNITIVO.md",
+  type:"Diseño",
+  description:"Planificación del procesamiento de instrucciones."
+ },
+ {
+  name:"MEMORIA",
+  file:"SISTEMA_MEMORIA.md",
+  type:"Diseño",
+  description:"Organización conceptual de los recuerdos."
+ },
+ {
+  name:"COMUNICACIÓN",
+  file:"SISTEMA_COMUNICACION.html",
+  type:"Interfaz",
+  description:"Interfaz experimental de texto y voz."
+ },
+ {
+  name:"NÚCLEO CENTRAL",
+  file:"CEREBRO_CORE.py",
+  type:"Código Python",
+  description:"Prototipo de procesamiento y memoria local."
+ },
+ {
+  name:"RED NEURONAL",
+  file:"RED_NEURONAL_HOLOGRAFICA.html",
+  type:"Interfaz",
+  description:"Red visual animada con nodos seleccionables."
+ },
+ {
+  name:"CENTRO DE CONTROL",
+  file:"CENTRO_DE_CONTROL.html",
+  type:"Interfaz",
+  description:"Panel principal de supervisión y navegación."
+ }
+];
+
+const container=document.getElementById("modules");
+
+modules.forEach((module,index)=>{
+ const card=document.createElement("article");
+ card.className="module";
+
+ const title=document.createElement("h3");
+ title.textContent=module.name;
+
+ const description=document.createElement("p");
+ description.textContent=module.description;
+
+ const button=document.createElement("button");
+ button.textContent="CONSULTAR MÓDULO";
+ button.addEventListener("click",()=>selectModule(index));
+
+ card.append(title,description,button);
+ container.appendChild(card);
+});
+
+function selectModule(index){
+ const module=modules[index];
+
+ document.getElementById("detailTitle").textContent=module.name;
+ document.getElementById("detailText").textContent=
+  module.description;
+
+ document.getElementById("detailStatus").textContent=
+  "Categoría: "+module.type+
+  " | Archivo: "+module.file;
+
+ if(module.file.endsWith(".html")){
+  const open=document.createElement("button");
+  open.textContent="ABRIR INTERFAZ";
+  open.style.cssText=
+   "padding:10px;background:#063047;color:#75edff;border:1px solid #00a9d5;border-radius:5px";
+
+  open.onclick=()=>window.open(
+   module.file,"_blank","noopener"
+  );
+
+  const panel=document.querySelector(".panel");
+  const old=document.getElementById("openButton");
+  if(old)old.remove();
+
+  open.id="openButton";
+  panel.appendChild(open);
+ }else{
+  const old=document.getElementById("openButton");
+  if(old)old.remove();
+ }
+}
+
+document.getElementById("total").textContent=modules.length;
+</script>
+</body>
+</html>

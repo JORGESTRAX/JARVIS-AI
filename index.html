@@ -1,0 +1,503 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020914">
+<title>JARVIS AI</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#020914;color:#d5faff;
+ font-family:Arial,sans-serif;
+}
+header{
+ display:flex;justify-content:space-between;align-items:center;
+ padding:16px;border-bottom:1px solid #087e9b;
+ background:#061625;position:sticky;top:0;z-index:5
+}
+.logo{color:#54eaff;letter-spacing:3px;font-size:20px;font-weight:bold}
+.status{font-size:10px;color:#42ffb0}
+nav{
+ display:flex;gap:8px;padding:12px;overflow-x:auto;
+ background:#04111e;border-bottom:1px solid #12394b
+}
+button{
+ background:#08283d;border:1px solid #087eaa;
+ color:#80edff;border-radius:6px;padding:10px;
+ cursor:pointer
+}
+nav button{white-space:nowrap}
+button:active{background:#07506c}
+main{max-width:950px;margin:auto;padding:14px}
+section{margin-bottom:17px}
+.panel{
+ border:1px solid #10516c;
+ background:linear-gradient(145deg,#071b2b,#030d19);
+ border-radius:10px;padding:15px
+}
+h2{font-size:14px;color:#54eaff;letter-spacing:2px}
+#brain{
+ display:block;width:100%;height:290px;
+ background:radial-gradient(ellipse,#082b43,#020914 72%);
+ border-radius:8px
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{
+ background:#061a2a;border:1px solid #12475e;
+ border-radius:7px;padding:12px;text-align:center
+}
+.stat span{font-size:9px;color:#91b9c7}
+.stat strong{display:block;color:#55eaff;margin-top:7px;font-size:16px}
+#messages{
+ height:230px;overflow-y:auto;
+ background:#020b15;border:1px solid #12445b;
+ border-radius:7px;padding:10px
+}
+.message{font-size:13px;line-height:1.5;margin:9px 0;white-space:pre-wrap}
+.user{color:#83dfff}
+.jarvis{color:#65ffcf}
+.system{color:#a3aebe}
+.inputrow{display:flex;gap:7px;margin-top:10px}
+input{
+ flex:1;min-width:0;background:#061727;
+ border:1px solid #14607b;border-radius:6px;
+ padding:12px;color:white;font-size:14px
+}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.module{
+ padding:13px;border:1px solid #12516a;
+ border-radius:7px;background:#061827
+}
+.module strong{color:#6beaff;font-size:12px}
+.module p{font-size:11px;color:#a8cbd6;line-height:1.4}
+.small{font-size:10px;color:#6b9dab}
+footer{text-align:center;padding:22px;color:#507587;font-size:10px}
+@media(max-width:370px){
+ .cards{grid-template-columns:1fr}
+ #brain{height:240px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">J.A.R.V.I.S.</div>
+ <div class="status" id="status">● SISTEMA ACTIVO</div>
+</header>
+
+<nav>
+ <button onclick="go('inicio')">CEREBRO</button>
+ <button onclick="go('chat')">COMUNICACIÓN</button>
+ <button onclick="go('modulos')">MÓDULOS</button>
+ <button onclick="showMemory()">MEMORIA</button>
+</nav>
+
+<main>
+
+<section id="inicio">
+ <div class="panel">
+  <h2>CEREBRO HOLOGRÁFICO</h2>
+  <canvas id="brain"></canvas>
+  <div class="small" style="text-align:center;margin-top:8px">
+   RED NEURONAL · NÚCLEO CENTRAL · CONEXIONES
+  </div>
+ </div>
+
+ <div class="stats">
+  <div class="stat">
+   <span>NÚCLEO</span>
+   <strong>ACTIVO</strong>
+  </div>
+  <div class="stat">
+   <span>RECUERDOS</span>
+   <strong id="memoryCount">0</strong>
+  </div>
+  <div class="stat">
+   <span>VERSIÓN</span>
+   <strong>1.0</strong>
+  </div>
+ </div>
+</section>
+
+<section id="chat" class="panel">
+ <h2>COMUNICACIÓN CON JARVIS</h2>
+
+ <div id="messages">
+  <div class="message jarvis">
+   JARVIS: Sistemas preparados. ¿En qué puedo ayudarte?
+  </div>
+ </div>
+
+ <div class="inputrow">
+  <input id="command" placeholder="Escribe una instrucción...">
+  <button onclick="sendMessage()">ENVIAR</button>
+  <button onclick="listen()" title="Hablar">🎙</button>
+ </div>
+
+ <p class="small">
+  Comandos: ayuda, estado, recordar:, memoria, olvidar, hora.
+ </p>
+</section>
+
+<section id="modulos">
+ <div class="panel">
+  <h2>SISTEMAS DEL CEREBRO</h2>
+  <div class="cards" id="moduleCards"></div>
+ </div>
+</section>
+
+<section class="panel">
+ <h2>DIAGNÓSTICO</h2>
+ <p class="small" id="diagnostic">
+  Interfaz inicializada. Motor local disponible.
+ </p>
+ <button onclick="diagnose()">EJECUTAR DIAGNÓSTICO</button>
+ <button onclick="clearChat()">LIMPIAR CHAT</button>
+</section>
+
+</main>
+
+<footer>
+ J.A.R.V.I.S. AI · WEB CORE 1.0
+</footer>
+
+<script>
+// =================================
+// 1. MEMORIA LOCAL
+// =================================
+
+const STORAGE_KEY="jarvis_memoria_v1";
+
+function loadMemory(){
+ try{
+  const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+  return Array.isArray(data)?data:[];
+ }catch{
+  return [];
+ }
+}
+
+let memory=loadMemory();
+
+function saveMemory(){
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(memory));
+ updateMemoryCount();
+}
+
+function updateMemoryCount(){
+ document.getElementById("memoryCount").textContent=memory.length;
+}
+
+function remember(text){
+ memory.push({
+  contenido:text,
+  fecha:new Date().toISOString()
+ });
+ saveMemory();
+ return "Información guardada correctamente en mi memoria.";
+}
+
+function recall(){
+ if(memory.length===0)return "Mi memoria todavía está vacía.";
+
+ return "RECUERDOS ALMACENADOS:\n"+
+ memory.map((m,i)=>(i+1)+". "+m.contenido).join("\n");
+}
+
+// =================================
+// 2. MOTOR COGNITIVO LOCAL
+// =================================
+
+function process(command){
+ const original=command.trim();
+ const text=original.toLowerCase();
+
+ if(!text)return "No recibí ninguna instrucción.";
+
+ if(text==="hola"||text==="hola jarvis"){
+  return "Saludos. Todos mis sistemas están preparados.";
+ }
+
+ if(text==="estado"||text==="diagnostico"){
+  return "JARVIS ONLINE.\n"+
+  "Núcleo: activo.\n"+
+  "Memoria: activa.\n"+
+  "Interfaz: activa.\n"+
+  "Versión: 1.0";
+ }
+
+ if(text.startsWith("recordar:")){
+  const information=original.substring(9).trim();
+  if(!information)return "Indica qué información debo recordar.";
+  return remember(information);
+ }
+
+ if(text==="memoria"||text==="recuerdos"){
+  return recall();
+ }
+
+ if(text==="olvidar"){
+  memory=[];
+  saveMemory();
+  return "Memoria local vaciada.";
+ }
+
+ if(text==="ayuda"){
+  return "COMANDOS DISPONIBLES:\n"+
+  "hola\nestado\nrecordar: información\n"+
+  "memoria\nolvidar\nhora\nayuda";
+ }
+
+ if(text==="hora"){
+  return "Fecha y hora de tu dispositivo: "+
+  new Date().toLocaleString("es-MX");
+ }
+
+ if(text==="salir"){
+  return "La sesión continúa disponible. Puedes cerrar la página cuando quieras.";
+ }
+
+ return "He recibido tu instrucción: "+original+
+ "\nTodavía no tengo conectado un modelo de inteligencia artificial externo.";
+}
+
+// =================================
+// 3. INTERFAZ DE CHAT
+// =================================
+
+const messages=document.getElementById("messages");
+const input=document.getElementById("command");
+
+function addMessage(type,text){
+ const div=document.createElement("div");
+ div.className="message "+type;
+ div.textContent=(type==="user"?"TÚ: ":"JARVIS: ")+text;
+ messages.appendChild(div);
+ messages.scrollTop=messages.scrollHeight;
+}
+
+function sendMessage(){
+ const value=input.value.trim();
+ if(!value)return;
+
+ addMessage("user",value);
+ input.value="";
+
+ const response=process(value);
+ addMessage("jarvis",response);
+ speak(response);
+}
+
+input.addEventListener("keydown",event=>{
+ if(event.key==="Enter")sendMessage();
+});
+
+// =================================
+// 4. VOZ
+// =================================
+
+function speak(text){
+ if(!("speechSynthesis" in window))return;
+
+ speechSynthesis.cancel();
+
+ const utterance=new SpeechSynthesisUtterance(text);
+ utterance.lang="es-MX";
+ utterance.rate=0.95;
+ utterance.pitch=0.8;
+
+ speechSynthesis.speak(utterance);
+}
+
+function listen(){
+ const Recognition=
+ window.SpeechRecognition||window.webkitSpeechRecognition;
+
+ if(!Recognition){
+  addMessage("system","El reconocimiento de voz no está disponible en este navegador.");
+  return;
+ }
+
+ const recognition=new Recognition();
+ recognition.lang="es-MX";
+ recognition.interimResults=false;
+
+ recognition.onstart=()=>{
+  document.getElementById("status").textContent="● ESCUCHANDO";
+ };
+
+ recognition.onresult=event=>{
+  input.value=event.results[0][0].transcript;
+  sendMessage();
+ };
+
+ recognition.onerror=()=>{
+  addMessage("system","No se pudo reconocer la voz.");
+ };
+
+ recognition.onend=()=>{
+  document.getElementById("status").textContent="● SISTEMA ACTIVO";
+ };
+
+ recognition.start();
+}
+
+// =================================
+// 5. MÓDULOS
+// =================================
+
+const modules=[
+ ["NÚCLEO CENTRAL","Procesamiento de instrucciones."],
+ ["MEMORIA","Almacenamiento de recuerdos."],
+ ["PERCEPCIÓN","Entrada de texto, audio e imágenes."],
+ ["RAZONAMIENTO","Análisis y elaboración de respuestas."],
+ ["APRENDIZAJE","Preparación para incorporar conocimientos."],
+ ["PLANIFICACIÓN","Organización de objetivos y tareas."],
+ ["COMUNICACIÓN","Interacción mediante texto y voz."],
+ ["RED NEURONAL","Representación de conexiones cerebrales."]
+];
+
+const moduleCards=document.getElementById("moduleCards");
+
+modules.forEach(item=>{
+ const card=document.createElement("div");
+ card.className="module";
+
+ const title=document.createElement("strong");
+ title.textContent=item[0];
+
+ const description=document.createElement("p");
+ description.textContent=item[1];
+
+ const status=document.createElement("span");
+ status.className="small";
+ status.textContent="● REGISTRADO";
+
+ card.append(title,description,status);
+ moduleCards.appendChild(card);
+});
+
+// =================================
+// 6. NAVEGACIÓN
+// =================================
+
+function go(id){
+ document.getElementById(id).scrollIntoView({
+  behavior:"smooth",
+  block:"start"
+ });
+}
+
+function showMemory(){
+ go("chat");
+ addMessage("system",recall());
+}
+
+function clearChat(){
+ messages.innerHTML="";
+ addMessage("system","Conversación limpiada.");
+}
+
+function diagnose(){
+ const result=[
+  "Interfaz: activa",
+  "Motor JavaScript: activo",
+  "Memoria local: "+memory.length+" recuerdos",
+  "Almacenamiento: "+(
+   typeof localStorage!=="undefined"?"disponible":"no disponible"
+  ),
+  "Voz: "+(
+   ("speechSynthesis" in window)?"disponible":"no disponible"
+  )
+ ];
+ document.getElementById("diagnostic").textContent=result.join(" | ");
+}
+
+// =================================
+// 7. CEREBRO HOLOGRÁFICO
+// =================================
+
+const canvas=document.getElementById("brain");
+const ctx=canvas.getContext("2d");
+
+let points=[];
+let animationFrame;
+
+function resizeBrain(){
+ const rect=canvas.getBoundingClientRect();
+ const ratio=Math.min(window.devicePixelRatio||1,2);
+
+ canvas.width=rect.width*ratio;
+ canvas.height=rect.height*ratio;
+ ctx.setTransform(ratio,0,0,ratio,0,0);
+
+ points=[];
+ const w=rect.width;
+ const h=rect.height;
+
+ const positions=[
+  [.5,.5],[.22,.25],[.5,.14],[.78,.25],
+  [.15,.53],[.85,.53],[.25,.8],[.5,.86],[.75,.8]
+ ];
+
+ positions.forEach((p,i)=>{
+  points.push({
+   x:p[0]*w,y:p[1]*h,
+   radius:i===0?12:6,
+   phase:Math.random()*6
+  });
+ });
+}
+
+function animateBrain(time){
+ const w=canvas.clientWidth;
+ const h=canvas.clientHeight;
+
+ ctx.clearRect(0,0,w,h);
+
+ points.forEach((p,i)=>{
+  for(let j=i+1;j<points.length;j++){
+   const q=points[j];
+   ctx.beginPath();
+   ctx.moveTo(p.x,p.y);
+   ctx.lineTo(q.x,q.y);
+   ctx.strokeStyle="rgba(0,205,255,.22)";
+   ctx.lineWidth=1;
+   ctx.stroke();
+  }
+ });
+
+ points.forEach((p,i)=>{
+  const glow=1+Math.sin(time*.002+p.phase)*.25;
+
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,p.radius*glow+5,0,Math.PI*2);
+  ctx.strokeStyle="rgba(0,230,255,.2)";
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(p.x,p.y,p.radius*glow,0,Math.PI*2);
+  ctx.fillStyle=i===0?"#ffffff":"#42eaff";
+  ctx.shadowBlur=18;
+  ctx.shadowColor="#00dfff";
+  ctx.fill();
+  ctx.shadowBlur=0;
+ });
+
+ animationFrame=requestAnimationFrame(animateBrain);
+}
+
+window.addEventListener("resize",resizeBrain);
+
+resizeBrain();
+animateBrain(0);
+updateMemoryCount();
+
+addMessage("system","Núcleo web inicializado. Memoria local disponible.");
+</script>
+</body>
+</html>
